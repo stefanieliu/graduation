@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<retrieval>
+	<index-directory>index</index-directory>
+	<default-index>default</default-index>
+	<topic-cluster>topic</topic-cluster>
+	<!-- <ictclas-directory>C:\ICTCLAS</ictclas-directory>  -->
+</retrieval>

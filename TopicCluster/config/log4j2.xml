@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn">
+   <Appenders>
+      <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5p [%c] - %m%n"/>
+      </Console>
+           
+     <RollingRandomAccessFile name="DebugFile" fileName="./logs/admin_debug.log" append="true" filePattern="./logs/admin_debug.log.%d{yyyyMMdd}">
+      <PatternLayout>
+        <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c] - %msg%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <TimeBasedTriggeringPolicy interval="24" modulate="true"/>
+      </Policies>    
+    </RollingRandomAccessFile>
+            
+   <RollingRandomAccessFile name="File" fileName="./logs/topic_cluster.log" append="true" filePattern="./logs/topic_cluster.log.%d{yyyyMMdd}">
+      <PatternLayout>
+        <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5p [%c] - %msg%n</Pattern>
+      </PatternLayout>
+      <Policies>
+        <TimeBasedTriggeringPolicy  interval="24"  modulate="true"/>
+      </Policies>
+      <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+    </RollingRandomAccessFile >
+         
+    </Appenders>
+    <Loggers>
+         
+<!--    <logger name="cn.ict.carc.christine.TopicCluster" level="DEBUG" additivity="false">    
+        <appender-ref ref="Console" />
+        <appender-ref ref="File" />
+        <appender-ref ref="Event.error" />
+    </logger>
+-->  
+         
+  	<root level="DEBUG">
+        <appender-ref ref="Console" />
+        <appender-ref ref="DebugFile" />
+        <appender-ref ref="File" />
+    </root>
+    </Loggers>
+         
+</Configuration>
