@@ -6,6 +6,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.dom4j.DocumentException;
 import org.xml.sax.SAXException;
 
 import cn.ict.carc.christine.util.Config;
@@ -16,7 +17,7 @@ public class IndexInitializer {
 	public IndexInitializer() {
 		
 	}
-	public boolean init() throws ParserConfigurationException, SAXException, IOException {
+	public boolean init() throws DocumentException  {
 //		try {
 			Config.loadConfig();
 		/*} catch (Exception e) {
