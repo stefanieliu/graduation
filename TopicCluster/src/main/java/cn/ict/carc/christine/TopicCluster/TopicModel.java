@@ -61,7 +61,7 @@ public class TopicModel {
 	private double [][] check;
 
 	public TopicModel() {
-		this.numTopics = 100;
+		this.numTopics = 500;
 		this.alphaSum = 1;
 		this.beta = 0.01;
 		initInstance();
@@ -123,7 +123,9 @@ public class TopicModel {
 	}
 	
 	public void saveModel() {
-		model.write(new File(this.output_dir + "/model"));
+		File f = new File(this.output_dir + "/model");
+		System.out.println(f.getAbsolutePath());
+		model.write(f);
 	}
 	
 	public static TopicModel loadModel(String output_dir) throws Exception {
@@ -210,8 +212,8 @@ public class TopicModel {
         
         check = generateCheck(word_document);
         
-        Thread[] threads = new Thread[5];
-        int threadcount = 5;
+        Thread[] threads = new Thread[10];
+        int threadcount = 10;
         for(int i=0; i<threadcount; ++i) {
         	threads[i]=new CalcWordThread(i*this.getNumTopics()/threadcount, this.getNumTopics()/threadcount, this.getNumWords());
         	threads[i].start();
@@ -244,7 +246,7 @@ public class TopicModel {
             	word_word.clear();
             	generateTopicCooccurrenceMatrix(i, word_word, word_document, document_topic, check, 10e-6);
             	try {
-					PrintHelper.printLinkedMatrix(new PrintWriter(new FileWriter(output_dir+"/word_word("+i+").txt")), word_word, 6, 10e-6);
+					PrintHelper.printLinkedMatrix(new PrintWriter(new FileWriter(output_dir+"/word_word("+i+").txt")), word_word, 6, 10e-2);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -333,7 +335,7 @@ public class TopicModel {
     			if(check[i][j]>0) {
 	     			double value = 0;
 	    			for(int k=0; k<this.getNumDocs(); ++k) {
-	    				double cooccurence = Math.log(1+word_document[i][k]) * Math.log(1+word_document[j][k]);
+	    				double cooccurence = word_document[i][k] * word_document[j][k];
 	    				value += cooccurence*document_topic[k][topic_id];
 	    			}
 	    			if(value>=threshold) {
@@ -353,7 +355,7 @@ public class TopicModel {
     		for(int j=i+1; j<this.getNumWords(); ++j) {
 	     		double value = 0;
 	    		for(int k=0; k<this.getNumDocs(); ++k) {
-	    			double cooccurence = Math.log(1+word_document[i][k]) * Math.log(1+word_document[j][k]);
+	    			double cooccurence = word_document[i][k] * word_document[j][k];
 	    			value += cooccurence*document_topic[k][topic_id];
 	  			}
 	   			if(value>=threshold) {
@@ -372,6 +374,11 @@ public class TopicModel {
     		FeatureSequence tokens = (FeatureSequence) instance.getData();
     		for(int j=0; j<tokens.getLength(); ++j) {
     			word_document[tokens.getIndexAtPosition(j)][i]++;
+    		}
+    	}
+    	for(int i=0; i< this.getNumWords(); ++i) {
+    		for(int j=0; j<this.getNumDocs(); ++j) {
+    			word_document[i][j]=Math.log(1+word_document[i][j]);
     		}
     	}
     	logger.debug("Finish calc Word_Document Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");

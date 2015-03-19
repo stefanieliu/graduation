@@ -144,7 +144,7 @@ private final static Logger logger = LogManager.getLogger(IndexAdmin.class);
 				String exquery = expander.expanse(query.getQuery());
 				lucenequery = new BooleanQuery();
 				Query origin = parser.parse(query.getQuery());
-				origin.setBoost(2);
+				origin.setBoost(1);
 				Query expansion = parser.parse(exquery);
 				expansion.setBoost((float) 0.5);
 				((BooleanQuery)lucenequery).add(origin,Occur.SHOULD);

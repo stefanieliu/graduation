@@ -40,6 +40,7 @@ public class QueryExpander {
 		model.importData(inputDir);
 		model.estimate(numIterations);
 		model.saveModel();
+		
 		model.saveResult();
 	}
 	

@@ -27,14 +27,14 @@ public class IndexAdminTest {
 		IndexInitializer initializer = new IndexInitializer();
 		initializer.init();
 		initializer.init4CreateIndex();
-		String NPCFile = "/Users/Catherine/Documents/Test/laws-utf8/1.TXT";
+		String NPCFile = "/home/Test/laws-utf8/1.TXT";
 		LawExtractor extractor = new LawExtractor();
 		List<Law> laws = extractor.parseFromNPCFile(NPCFile);
 		IndexAdmin admin = new IndexAdmin(true);
 		admin.delAllIndex();
 		admin.writeAllLaws(laws);
 		
-		String output = "/Users/Catherine/Documents/Test/Extract/1/";
+		String output = "/home/Test/Extract/1/";
 		File outputDir = new File(output);
 		outputDir.delete();
 		outputDir.mkdirs();
@@ -73,22 +73,22 @@ public class IndexAdminTest {
 	public void testChapter() throws Exception {
 		IndexInitializer initializer = new IndexInitializer();
 		initializer.init();
-		Config.IndexDirectory="indexChapterlog";
-		Config.TopicClusterDirectory="topicChapterlog";
+		//Config.IndexDirectory="indexChapterlog";
+		//Config.TopicClusterDirectory="topicChapterlog";
 		initializer.init4CreateIndex();
-		String NPCFile = "/Users/Catherine/Documents/Test/laws-utf8/1.TXT";
+		String NPCFile = "/home/Test/laws-utf8/1.TXT";
 		LawExtractor extractor = new LawExtractor();
 		List<Law> laws = extractor.parseChapterFromNPCFile(NPCFile);
 		IndexAdmin admin = new IndexAdmin(true);
 		admin.delAllIndex();
 		admin.writeAllLaws(laws);
 		
-		String output = "/Users/Catherine/Documents/Test/Extract-Chapter/1/";
+		String output = "/home/Test/Extract-Chapter/1/";
 		File outputDir = new File(output);
 		outputDir.delete();
 		outputDir.mkdirs();
 		for(Law l: laws) {
-			String path = outputDir.getAbsolutePath() + "/" + l.getTitle() + ".txt";
+			String path = outputDir.getAbsolutePath() + "/" + l.getId() + ".txt";
 			try {
 				FileWriter writer = new FileWriter(path);
 				writer.write(StringHelper.join(l.getTitle(), l.getText()));
@@ -162,6 +162,7 @@ public class IndexAdminTest {
 		}
 		System.out.println("-------");
 		result.clear();
+		//IndexAdmin admin = new IndexAdmin(true);
 		System.out.println("TotalHits = " +admin.query("家庭关系 子女赡养", 0, 10, result));
 		for(int i=0; i<result.size(); ++i) {
 			System.out.println(i+":" +result.get(i).getTitle());
