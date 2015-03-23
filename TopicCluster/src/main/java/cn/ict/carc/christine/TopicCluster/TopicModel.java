@@ -148,6 +148,12 @@ public class TopicModel {
 		return probs;
 	}
 	
+	public double[][] getDocumentTopicDistribution(double threshold, int topK) {
+		double[][] doc_topic = new double[this.getNumDocs()][this.getNumTopics()];
+		this.generateDocumentTopicMatrix(doc_topic, threshold);
+		return doc_topic;
+	}
+	
 	public int[] getQueryWordIndexes(String query) {
 		InstanceList testing = new InstanceList(instances.getPipe());
 		testing.addThruPipe(new Instance(query, null, "query instance", null));
@@ -279,7 +285,7 @@ public class TopicModel {
     	logger.debug("Finish calc Check Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     	return result;
     }
-	public void generateWordTopicMatrix(LinkedMatrix m, double threshold) {
+	private void generateWordTopicMatrix(LinkedMatrix m, double threshold) {
         logger.debug("Begin calc Word-Topic Matrix");
         long start = System.currentTimeMillis();
         for(int i=0; i<this.getNumTopics(); ++i) {
@@ -295,7 +301,7 @@ public class TopicModel {
         logger.debug("Finish calc Word-Topic Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     }
     
-    public void generateDocumentTopicMatrix(double[][] doc_topic, double threshold) {
+    private void generateDocumentTopicMatrix(double[][] doc_topic, double threshold) {
     	logger.debug("Begin calc Document-Topic Matrix");
     	long start = System.currentTimeMillis();
 
@@ -326,7 +332,7 @@ public class TopicModel {
 		logger.debug("Finish calc Document-Topic Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     }
 
-    public void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double[][] check, double threshold) {
+    private void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double[][] check, double threshold) {
     	logger.debug("Begin on calc Word_Word Matrix on Topic " + topic_id);
     	long start = System.currentTimeMillis();
     	
@@ -347,7 +353,7 @@ public class TopicModel {
     	logger.debug("Finish calc Word_Word Matrix on Topic " + topic_id + ", Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     }
     
-    public void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double threshold) {
+    private void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double threshold) {
     	logger.debug("Begin on calc Word_Word Matrix on Topic " + topic_id);
     	long start = System.currentTimeMillis();
     	

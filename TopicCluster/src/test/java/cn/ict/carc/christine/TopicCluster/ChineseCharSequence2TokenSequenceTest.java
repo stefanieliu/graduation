@@ -19,7 +19,9 @@ public class ChineseCharSequence2TokenSequenceTest {
 	@Test
 	public void test() {
 		try {
-			Instance carrier = new Instance (new File("/Users/Catherine/Documents/Test/laws-utf8/Extract/1/1.txt"), null, null, null);
+			//String file = "/Users/Catherine/Documents/Test/laws-utf8/Extract/1/1.txt";
+			String file = "/Users/Catherine/Documents/Test/phrase.txt";
+			Instance carrier = new Instance (new File(file), null, null, null);
 			SerialPipes p = new SerialPipes (new Pipe[] {
 			new Input2CharSequence ("utf-8"),
 			new ChineseCharSequence2TokenSequence(new SmartChineseAnalyzer())});

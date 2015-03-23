@@ -13,9 +13,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.MultiReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.util.BytesRef;
 
 import cn.ict.carc.christine.util.Config;
 
@@ -137,6 +143,26 @@ public class IndexReaderPool {
 	public MultiReader getAllIndexReader() {
 		return this.getMultiIndexReader(this.subIndexes);
 	}
+	
+	public void listTerms() throws IOException {
+		IndexReader reader = this.getAllIndexReader();
+		Fields fields = MultiFields.getFields(reader);
+        Iterator<String> fieldsIterator = fields.iterator();
+        while(fieldsIterator.hasNext()){
+            String field = fieldsIterator.next();
+            if(field.equals("text")) {
+	            Terms terms = fields.terms(field);
+	            TermsEnum termsEnums = terms.iterator(null);
+	            BytesRef byteRef = null;
+	            System.out.println("field : "+ field);
+	            while((byteRef = termsEnums.next()) != null) {
+	                String term = new String(byteRef.bytes, byteRef.offset, byteRef.length);
+	                System.out.println(term + ":" + reader.totalTermFreq(new Term(term)));
+	            }
+            }
+        }
+	}
+	
 	public boolean containIndexReader(String indexDir)
 	{
 		return indexReaderMap.containsKey(indexDir);
