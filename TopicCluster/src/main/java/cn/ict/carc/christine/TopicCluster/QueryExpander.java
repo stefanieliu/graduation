@@ -128,14 +128,14 @@ public class QueryExpander {
 	}
 	
 	public double [] predictTopicProbs(String query) throws Exception {
-		if(model==null) {
-			logger.debug("Load Topic Model by "+output_dir+"/model");
-			model = TopicModel.loadModel(output_dir);
-		}
 		return model.predictTopic(query);
 	}
 	
 	public List<ExpansionWord> expanseOffline(String query) throws Exception {
+		if(model==null) {
+			logger.debug("Load Topic Model by "+output_dir+"/model");
+			model = TopicModel.loadModel(output_dir);
+		}
 		double [] wordProbs = new double[model.getNumWords()];
 		int numwords = model.getNumWords();
 		double [] topicProbs = this.predictTopicProbs(query);
@@ -185,14 +185,14 @@ public class QueryExpander {
 			MaxHeapElement e = iter.next();
 			if(e.value >= THRESHOLD) {
 				logger.debug("Calc with Topic " + e.index + " for expanse("+e.value+")");
-				ArrayHelper.addInPlace(wordProbs, this.addExpansionOfTopicOnline(e.index, queryword, numwords, document_topic, word_document));
+				ArrayHelper.addInPlace(wordProbs, this.addExpansionOfTopicOnline(e.index, e.value, queryword, numwords, document_topic, word_document));
 			}
 			++k;
 		}
 		return getTopExpansionWords(wordProbs,TOP_K);
 	}
 	
-	private double[] addExpansionOfTopicOnline(int topic_id,
+	private double[] addExpansionOfTopicOnline(int topic_id, double topic_probs ,
 			int[] queryword, int numwords, double[][] doc_topic, double[][] word_doc) {
 		long start = System.currentTimeMillis();
 		//LinkedMatrix lm = LinkedMatrix.load(output_dir+"/word_word("+topic_id+").txt");
@@ -214,6 +214,7 @@ public class QueryExpander {
 				}
 			}
 		}
+		ArrayHelper.plusInPlace(probs, topic_probs);
 		long caend = System.currentTimeMillis();
 		logger.debug("IO Time:" + (ioend - start)+" Millis, Cal Time:"+(caend - ioend) +" Millis");
 		return probs;
