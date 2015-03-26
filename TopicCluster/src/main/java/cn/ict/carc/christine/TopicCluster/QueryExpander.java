@@ -22,6 +22,7 @@ import cn.ict.carc.christine.bean.ExpansionWord;
 import cn.ict.carc.christine.bean.Law;
 import cn.ict.carc.christine.bean.LinkedMatrix;
 import cn.ict.carc.christine.bean.MaxHeapElement;
+import cn.ict.carc.christine.util.ArrayHelper;
 import cn.ict.carc.christine.util.PrintHelper;
 
 public class QueryExpander {
@@ -135,6 +136,8 @@ public class QueryExpander {
 	}
 	
 	public List<ExpansionWord> expanseOffline(String query) throws Exception {
+		double [] wordProbs = new double[model.getNumWords()];
+		int numwords = model.getNumWords();
 		double [] topicProbs = this.predictTopicProbs(query);
 		int[] queryword = model.getQueryWordIndexes(query);
 		for(int i=0; i<queryword.length; ++i) {
@@ -145,13 +148,13 @@ public class QueryExpander {
 		TreeSet<MaxHeapElement> heap = getMaxHeap(topicProbs);
 		Iterator<MaxHeapElement> iter =  heap.iterator();
 		int k=0;
-		double [] wordProbs = new double[model.getNumWords()];
+		
 		Arrays.fill(wordProbs, 0);
 		while(iter.hasNext()&&k<TOP_K) {
 			MaxHeapElement e = iter.next();
 			if(e.value >= THRESHOLD) {
 				logger.debug("Calc with Topic " + e.index + " for expanse("+e.value+")");
-				this.addExpansionOfTopic(e.index, topicProbs[e.index], queryword, wordProbs);
+				ArrayHelper.addInPlace(wordProbs, this.addExpansionOfTopic(e.index, topicProbs[e.index], queryword, numwords));
 			}
 			++k;
 		}
@@ -164,6 +167,7 @@ public class QueryExpander {
         model.generateDocumentTopicMatrix(document_topic, THRESHOLD);
         model.generateWordDocumentMatrixWithLog(word_document);
         double [] wordProbs = new double[model.getNumWords()];
+        int numwords = model.getNumWords();
         
 		double [] topicProbs = this.predictTopicProbs(query);
 		int[] queryword = model.getQueryWordIndexes(query);
@@ -181,19 +185,20 @@ public class QueryExpander {
 			MaxHeapElement e = iter.next();
 			if(e.value >= THRESHOLD) {
 				logger.debug("Calc with Topic " + e.index + " for expanse("+e.value+")");
-				this.addExpansionOfTopicOnline(e.index, queryword, wordProbs, document_topic, word_document);
+				ArrayHelper.addInPlace(wordProbs, this.addExpansionOfTopicOnline(e.index, queryword, numwords, document_topic, word_document));
 			}
 			++k;
 		}
 		return getTopExpansionWords(wordProbs,TOP_K);
 	}
 	
-	private void addExpansionOfTopicOnline(int topic_id,
-			int[] queryword, double[] out_probs, double[][] doc_topic, double[][] word_doc) {
+	private double[] addExpansionOfTopicOnline(int topic_id,
+			int[] queryword, int numwords, double[][] doc_topic, double[][] word_doc) {
 		long start = System.currentTimeMillis();
 		//LinkedMatrix lm = LinkedMatrix.load(output_dir+"/word_word("+topic_id+").txt");
-		LinkedMatrix lm = new LinkedMatrix(out_probs.length, out_probs.length);
+		LinkedMatrix lm = new LinkedMatrix(numwords, numwords);
 		model.generateWordCoffMatrixWithQueryAndDictionary(topic_id, lm, queryword, TOP_K ,word_doc, doc_topic, 10e-6);
+		double[] probs = new double[numwords];
 		long ioend = System.currentTimeMillis();
 		for(int i=0; i<queryword.length; ++i) {
 			if(lm.existRow(queryword[i])) {
@@ -201,16 +206,17 @@ public class QueryExpander {
 				Iterator<Entry<Integer, Double> > iter = rows.entrySet().iterator();
 				while(iter.hasNext()) {
 					Entry<Integer,Double> entry = iter.next();
-					if(out_probs[entry.getKey()]==0) {
-						out_probs[entry.getKey()]=entry.getValue();
+					if(probs[entry.getKey()]==0) {
+						probs[entry.getKey()]=entry.getValue();
 					} else {
-						out_probs[entry.getKey()]*=entry.getValue();
+						probs[entry.getKey()]*=entry.getValue();
 					}
 				}
 			}
 		}
 		long caend = System.currentTimeMillis();
 		logger.debug("IO Time:" + (ioend - start)+" Millis, Cal Time:"+(caend - ioend) +" Millis");
+		return probs;
 	}
 
 	private TreeSet<MaxHeapElement> getMaxHeap(double[] array) {
@@ -235,26 +241,29 @@ public class QueryExpander {
 		return words;
 	}
 	
-	private void addExpansionOfTopic(int topic_id, double query_prob, int[] queryword, double[] out_probs) throws IOException {
+	private double[] addExpansionOfTopic(int topic_id, double query_prob, int[] queryword, int numwords) throws IOException {
 		long start = System.currentTimeMillis();
 		LinkedMatrix lm = LinkedMatrix.load(output_dir+"/word_word("+topic_id+").txt");
 		long ioend = System.currentTimeMillis();
-		
+		double[] probs = new double[numwords];
+		Arrays.fill(probs, 0);
 		for(int i=0; i<queryword.length; ++i) {
 			if(lm.existRow(queryword[i])) {
 				Map<Integer, Double> rows = lm.getRow(queryword[i]);
 				Iterator<Entry<Integer, Double> > iter = rows.entrySet().iterator();
 				while(iter.hasNext()) {
 					Entry<Integer,Double> entry = iter.next();
-					if(out_probs[entry.getKey()]==0) {
-						out_probs[entry.getKey()]=(entry.getValue()*query_prob);
+					if(probs[entry.getKey()]==0) {
+						probs[entry.getKey()]=entry.getValue();
 					} else {
-						out_probs[entry.getKey()]*=(entry.getValue()*query_prob);
+						probs[entry.getKey()]*=entry.getValue();
 					}
 				}
 			}
 		}
+		ArrayHelper.plusInPlace(probs, query_prob);
 		long caend = System.currentTimeMillis();
 		logger.debug("IO Time:" + (ioend - start)+" Millis, Cal Time:"+(caend - ioend) +" Millis");
+		return probs;
 	}
 }

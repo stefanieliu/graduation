@@ -38,7 +38,7 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.Labeling;
 import cn.ict.carc.christine.bean.Law;
 import cn.ict.carc.christine.bean.LinkedMatrix;
-import cn.ict.carc.christine.util.CollectionHelper;
+import cn.ict.carc.christine.util.ArrayHelper;
 import cn.ict.carc.christine.util.PrintHelper;
 import cn.ict.carc.christine.util.TxtFilter;
 
@@ -207,7 +207,7 @@ public class TopicModel {
 			topWords.add(info.getID());
 		}
         logger.debug("Finish calc Top "+ TopK +" words for Topic " + "topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
-        return CollectionHelper.toIntArray(topWords);
+        return ArrayHelper.toIntArray(topWords);
 	}
 	
 	public int[] getTopWordForTopicWithoutSingleCharacter(int topic, int TopK, double threshold) {
@@ -228,7 +228,7 @@ public class TopicModel {
 			}
 		}
 		//logger.debug("Finish calc Top "+ TopK +" words for Topic " + "topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
-        return CollectionHelper.toIntArray(topWords);
+        return ArrayHelper.toIntArray(topWords);
 	}
 	
 	public int[] getTopWords(int TopK, double threshold) {
@@ -248,7 +248,7 @@ public class TopicModel {
 			}
         }
         logger.debug("Finish calc Top "+ TopK +" words for each Topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
-        return CollectionHelper.toIntArray(topWords);
+        return ArrayHelper.toIntArray(topWords);
 	}
 	
 	public int[] getTopWordsWithoutSingleCharacter(int TopK, double threshold) {
@@ -271,7 +271,7 @@ public class TopicModel {
 			}
         }
         logger.debug("Finish calc Top "+ TopK +" words for each Topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
-        return CollectionHelper.toIntArray(topWords);
+        return ArrayHelper.toIntArray(topWords);
 	}
 	
     public void saveResult() throws Exception {
