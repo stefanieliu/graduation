@@ -30,7 +30,7 @@ public class IndexAdminTest {
 		String NPCFile = "/home/Test/laws-utf8/1.TXT";
 		LawExtractor extractor = new LawExtractor();
 		List<Law> laws = extractor.parseFromNPCFile(NPCFile);
-		IndexAdmin admin = new IndexAdmin(true);
+		IndexAdmin admin = new IndexAdmin();
 		admin.delAllIndex();
 		admin.writeAllLaws(laws);
 		
@@ -55,7 +55,7 @@ public class IndexAdminTest {
 		expander.estimateTopicModelWithSaving(outputDir, 1000);
 		
 		initializer.init4Search();
-		IndexAdmin normal = new IndexAdmin(false);
+		IndexAdmin normal = new IndexAdmin();
 		ArrayList<Law> result = new ArrayList<Law>();
 		System.out.println("TotalHits = " + normal.query("家庭关系 子女赡养", 0, 10, result));
 		for(int i=0; i<result.size(); ++i) {
@@ -75,15 +75,15 @@ public class IndexAdminTest {
 		initializer.init();
 		//Config.IndexDirectory="indexChapterlog";
 		//Config.TopicClusterDirectory="topicChapterlog";
-		initializer.init4CreateIndex();
-		String NPCFile = "/home/Test/laws-utf8/1.TXT";
+		/*initializer.init4CreateIndex();
+		String NPCFile = "/Users/Catherine/Documents/Test/laws-utf8/1.TXT";
 		LawExtractor extractor = new LawExtractor();
-		List<Law> laws = extractor.parseChapterFromNPCFile(NPCFile);
-		IndexAdmin admin = new IndexAdmin(true);
+		List<Law> laws = extractor.parseItemFromNPCFile(NPCFile);
+		IndexAdmin admin = new IndexAdmin();
 		admin.delAllIndex();
-		admin.writeAllLaws(laws);
+		admin.writeAllLaws(laws);*/
 		
-		String output = "/home/Test/Extract-Chapter/1/";
+		/*String output = "/home/Test/Extract-Chapter/1/";
 		File outputDir = new File(output);
 		outputDir.delete();
 		outputDir.mkdirs();
@@ -98,24 +98,32 @@ public class IndexAdminTest {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		}*/
 		
-		QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
-		expander.estimateTopicModelWithSaving(outputDir, 1000);
+		//QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
+		//expander.estimateTopicModelWithSaving(laws, 1000);
+		//expander.estimateTopicModelWithSaving(outputDir, 1000);
 		
 		initializer.init4Search();
-		IndexAdmin normal = new IndexAdmin(false);
+		IndexAdmin admin = new IndexAdmin();
 		ArrayList<Law> result = new ArrayList<Law>();
-		System.out.println("TotalHits = " + normal.query("离婚后的子女赡养", 0, 10, result));
+		System.out.println("TotalHits = " + admin.query("离婚后的子女抚养问题", 0, 10, result));
 		for(int i=0; i<result.size(); ++i) {
-			System.out.println(i+":" +result.get(i).getTitle());
+			System.out.println(i+":" +result.get(i).getText());
 		}
 		System.out.println("-------");
 		result.clear();
 		//IndexAdmin admin = new IndexAdmin(true);
-		System.out.println("TotalHits = " +admin.query("离婚后的子女赡养", 0, 10, result));
+		System.out.println("TotalHits = " +admin.queryWithGlobalExpansion("离婚后的子女抚养问题", 0, 10, result));
 		for(int i=0; i<result.size(); ++i) {
-			System.out.println(i+":" +result.get(i).getTitle());
+			System.out.println(i+":" +result.get(i).getText());
+		}
+		System.out.println("-------");
+		result.clear();
+		//IndexAdmin admin = new IndexAdmin(true);
+		System.out.println("TotalHits = " +admin.queryWithLocalExpansion("离婚后的子女抚养问题", 0, 10, result));
+		for(int i=0; i<result.size(); ++i) {
+			System.out.println(i+":" +result.get(i).getText());
 		}
 	}
 	
@@ -123,49 +131,36 @@ public class IndexAdminTest {
 	public void testItem() throws Exception {
 		IndexInitializer initializer = new IndexInitializer();
 		initializer.init();
-		Config.IndexDirectory="indexItem";
-		Config.TopicClusterDirectory="topicItem";
 		initializer.init4CreateIndex();
 		String NPCFile = "/Users/Catherine/Documents/Test/laws-utf8/1.TXT";
 		LawExtractor extractor = new LawExtractor();
 		List<Law> laws = extractor.parseItemFromNPCFile(NPCFile);
-		IndexAdmin admin = new IndexAdmin(true);
+		IndexAdmin admin = new IndexAdmin();
 		admin.delAllIndex();
 		admin.writeAllLaws(laws);
 		
-		String output = "/Users/Catherine/Documents/Test/Extract-Item/1/";
-		File outputDir = new File(output);
-		outputDir.delete();
-		outputDir.mkdirs();
-		for(Law l: laws) {
-			String path = outputDir.getAbsolutePath() + "/" + l.getTitle() + ".txt";
-			try {
-				FileWriter writer = new FileWriter(path);
-				writer.write(StringHelper.join(l.getTitle(), l.getText()));
-				writer.flush();
-				writer.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		
 		QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
-		expander.estimateTopicModelWithSaving(outputDir, 1000);
+		expander.estimateTopicModelWithSaving(laws, 1000, 1000);
 		
 		initializer.init4Search();
-		IndexAdmin normal = new IndexAdmin(false);
 		ArrayList<Law> result = new ArrayList<Law>();
-		System.out.println("TotalHits = " + normal.query("家庭关系 子女赡养", 0, 10, result));
+		System.out.println("TotalHits = " + admin.query("离婚后的子女抚养问题", 0, 10, result));
 		for(int i=0; i<result.size(); ++i) {
-			System.out.println(i+":" +result.get(i).getTitle());
+			System.out.println(i+":" +result.get(i).getText());
 		}
 		System.out.println("-------");
 		result.clear();
 		//IndexAdmin admin = new IndexAdmin(true);
-		System.out.println("TotalHits = " +admin.query("家庭关系 子女赡养", 0, 10, result));
+		System.out.println("TotalHits = " +admin.queryWithGlobalExpansion("离婚后的子女抚养问题", 0, 10, result));
 		for(int i=0; i<result.size(); ++i) {
-			System.out.println(i+":" +result.get(i).getTitle());
+			System.out.println(i+":" +result.get(i).getText());
+		}
+		System.out.println("-------");
+		result.clear();
+		//IndexAdmin admin = new IndexAdmin(true);
+		System.out.println("TotalHits = " +admin.queryWithLocalExpansion("离婚后的子女抚养问题", 0, 10, result));
+		for(int i=0; i<result.size(); ++i) {
+			System.out.println(i+":" +result.get(i).getText());
 		}
 	}
 }

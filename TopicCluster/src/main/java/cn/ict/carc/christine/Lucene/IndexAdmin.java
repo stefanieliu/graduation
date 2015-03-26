@@ -1,6 +1,7 @@
 package cn.ict.carc.christine.Lucene;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,18 +26,14 @@ import org.apache.lucene.util.Version;
 
 import cn.ict.carc.christine.Exception.IllegalLawException;
 import cn.ict.carc.christine.TopicCluster.QueryExpander;
+import cn.ict.carc.christine.bean.ExpansionWord;
 import cn.ict.carc.christine.bean.Law;
 import cn.ict.carc.christine.util.C;
 import cn.ict.carc.christine.util.Config;
 
 public class IndexAdmin {
 private final static Logger logger = LogManager.getLogger(IndexAdmin.class);
-	
-	private boolean withExpansion = false;
-	
-	public IndexAdmin( boolean withExpansion) {
-		this.withExpansion = withExpansion;
-	}
+private int defaultTopK = 10;
 	
 	public int writeLaw(Law doc) {
 		return this.addLaw(doc, false);
@@ -139,21 +136,162 @@ private final static Logger logger = LogManager.getLogger(IndexAdmin.class);
 		
 		try {
 			Query lucenequery;
-			if(withExpansion) {
-				QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
-				String exquery = expander.expanse(query.getQuery());
-				lucenequery = new BooleanQuery();
-				Query origin = parser.parse(query.getQuery());
-				origin.setBoost(1);
-				Query expansion = parser.parse(exquery);
-				expansion.setBoost((float) 0.5);
-				((BooleanQuery)lucenequery).add(origin,Occur.SHOULD);
-				((BooleanQuery)lucenequery).add(expansion,Occur.SHOULD);
-			} else {
-				lucenequery = parser.parse(query.getQuery());
-			}
+			lucenequery = parser.parse(query.getQuery());
 			lucenequery = searcher.rewrite(lucenequery);
+			logger.info(lucenequery);
+			int endoffset = startoffset + rows;
+			TopDocs docs;
+			if(query.withFilter())
+			{
+				docs = searcher.search(lucenequery, query.getLuceneFilter(), endoffset);
+			}
+			else
+			{
+				docs= searcher.search(lucenequery, endoffset);
+			}
+			endoffset = docs.totalHits>endoffset?endoffset:docs.totalHits;
+  
+			Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
+			highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
+			
+			for(int i = startoffset; i < endoffset ; i++){ 
+			
+				Document d = searcher.doc(docs.scoreDocs[i].doc);
+				Law law = Law.fromLuceneDocument(d);
+				law.setRelScore(docs.scoreDocs[i].score);
+				String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
+				if(content!=null) {
+					law.setText(content);
+				}
+				result.add(law);
+			}
+			return docs.totalHits;
+		}
+		catch(Exception e) {
+			logger.error(e.getMessage());
+		}
+		return 0;
+	}
+
+	public int queryWithGlobalExpansion(String query, int startoffset, int rows,
+			Collection<Law> result) {
+		LawQuery lawquery = new LawQuery(query);
+		return queryWithGlobalExpansion(lawquery, startoffset, rows, result);
+	}
+	
+	public int queryWithGlobalExpansion(LawQuery query, int startoffset, int rows, Collection<Law> result) {
+		MultiReader reader = IndexReaderPool.getInstance().getAllIndexReader();
+		IndexSearcher searcher = new IndexSearcher(reader);
+		MultiFieldQueryParser parser = new MultiFieldQueryParser(Version.LUCENE_CURRENT, query.getQueryFields(), new SmartChineseAnalyzer());
+		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<font color=\"red\">", "</font>");
 		
+		try {
+			Query lucenequery = new BooleanQuery();
+
+			QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
+			List<ExpansionWord> exquery = expander.expanseOffline(query.getQuery());
+			Query origin = parser.parse(query.getQuery());
+			origin.setBoost(1);
+			((BooleanQuery)lucenequery).add(origin,Occur.SHOULD);
+			double norm = exquery.get(0).probs;
+			for(ExpansionWord word : exquery) {
+				Query expanse = parser.parse(word.word);
+				expanse.setBoost((float)(0.5*word.probs/norm));
+				((BooleanQuery)lucenequery).add(expanse,Occur.SHOULD);
+			}
+
+			lucenequery = searcher.rewrite(lucenequery);
+			logger.info(lucenequery);
+			int endoffset = startoffset + rows;
+			TopDocs docs;
+			if(query.withFilter())
+			{
+				docs = searcher.search(lucenequery, query.getLuceneFilter(), endoffset);
+			}
+			else
+			{
+				docs= searcher.search(lucenequery, endoffset);
+			}
+			endoffset = docs.totalHits>endoffset?endoffset:docs.totalHits;
+  
+			Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
+			highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
+			
+			for(int i = startoffset; i < endoffset ; i++){ 
+			
+				Document d = searcher.doc(docs.scoreDocs[i].doc);
+				Law law = Law.fromLuceneDocument(d);
+				law.setRelScore(docs.scoreDocs[i].score);
+				String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
+				if(content!=null) {
+					law.setText(content);
+				}
+				result.add(law);
+			}
+			return docs.totalHits;
+		}
+		catch(Exception e) {
+			logger.error(e.getMessage());
+		}
+		return 0;
+	}
+	
+	public int queryWithLocalExpansion(String query, int startoffset, int rows,
+			Collection<Law> result) {
+		LawQuery lawquery = new LawQuery(query);
+		return queryWithLocalExpansion(lawquery, startoffset, rows, result);
+	}
+	
+	
+	public int queryWithLocalExpansion(LawQuery query, int startoffset, int rows, Collection<Law> result) {
+		MultiReader reader = IndexReaderPool.getInstance().getAllIndexReader();
+		IndexSearcher searcher = new IndexSearcher(reader);
+		MultiFieldQueryParser parser = new MultiFieldQueryParser(Version.LUCENE_CURRENT, query.getQueryFields(), new SmartChineseAnalyzer());
+		SimpleHTMLFormatter formatter = new SimpleHTMLFormatter("<font color=\"red\">", "</font>");
+		
+		ArrayList<Law> first_result = new ArrayList<Law>();
+		///first search
+		try {
+			Query firstquery = parser.parse(query.getQuery());
+			firstquery = searcher.rewrite(firstquery);
+			TopDocs docs;
+			if(query.withFilter())
+			{
+				docs = searcher.search(firstquery, query.getLuceneFilter(), defaultTopK);
+			}
+			else
+			{
+				docs= searcher.search(firstquery, defaultTopK);
+			}
+			for(int i = 0; i < defaultTopK ; i++){ 
+				Document d = searcher.doc(docs.scoreDocs[i].doc);
+				Law law = Law.fromLuceneDocument(d);
+				first_result.add(law);
+			}
+			
+		} catch(Exception e) {
+			logger.error(e.getMessage());
+			
+		}
+		
+		///second search
+		try {
+			Query lucenequery = new BooleanQuery();
+			QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
+			expander.estimateTopicModelOnline(first_result, 2, 10);
+			List<ExpansionWord> exquery = expander.expanseOnline(query.getQuery());
+			Query origin = parser.parse(query.getQuery());
+			origin.setBoost(1);
+			((BooleanQuery)lucenequery).add(origin,Occur.SHOULD);
+			double norm = exquery.get(0).probs;
+			for(ExpansionWord word : exquery) {
+				Query expanse = parser.parse(word.word);
+				expanse.setBoost((float)(0.5*word.probs/norm));
+				((BooleanQuery)lucenequery).add(expanse,Occur.SHOULD);
+			}
+
+			lucenequery = searcher.rewrite(lucenequery);
+			logger.info(lucenequery);
 			int endoffset = startoffset + rows;
 			TopDocs docs;
 			if(query.withFilter())

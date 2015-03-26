@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -68,6 +69,33 @@ public class LinkedMatrix {
 		} else {
 			return 0;
 		}
+	}
+	
+	public int getRowLength() {
+		return rowLength;
+	}
+
+	public void setRowLength(int rowLength) {
+		this.rowLength = rowLength;
+	}
+
+	public int getColLength() {
+		return colLength;
+	}
+
+	public void setColLength(int colLength) {
+		this.colLength = colLength;
+	}
+
+	public boolean existRow(int row) {
+		return row>=0&&row<this.rowLength;
+	}
+	
+	public Map<Integer, Double> getRow(int row) {
+		if(row<0||row>=this.rowLength) {
+			throw new IndexOutOfBoundsException("Row Index:"+row);
+		}
+		return this.values.get(row);
 	}
 	
 	public void print(PrintWriter out, int accuracy, double threshold) {

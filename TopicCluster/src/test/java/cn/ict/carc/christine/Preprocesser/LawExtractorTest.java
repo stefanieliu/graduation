@@ -49,6 +49,7 @@ public class LawExtractorTest {
 			
 		}
 	}
+	
 	@Test
 	public void TestNPCChapterFileExtractor() {
 		String NPCFile = "/Users/Catherine/Documents/Test/laws-utf8";
@@ -56,20 +57,18 @@ public class LawExtractorTest {
 		
 		LawExtractor extractor = new LawExtractor();
 		for(File f : dir.listFiles()) {
-			if(!f.getName().endsWith("1.TXT")) {
+			if(!f.getName().endsWith(".TXT")) {
 				continue;
 			}
 			logger.info(f.getAbsolutePath());
-			List<Law> lists = extractor.parseItemFromNPCFile(f.getAbsolutePath());
+			List<Law> lists = extractor.parseChapterFromNPCFile(f.getAbsolutePath());
 			logger.debug("Get "+ lists.size() +" Laws from "+f.getName());
-			String output = dir.getAbsolutePath() + "/Extract-Item/" + f.getName().substring(0, f.getName().length()-4);
+			String output = "/Users/Catherine/Documents/Test/Chapter-Data/" + f.getName().substring(0, f.getName().length()-4);
 			File outputDir = new File(output);
 			outputDir.delete();
 			outputDir.mkdirs();
 			for(Law l: lists) {
-				//System.out.println(l.getTitle()+"--"+l.getText());
-				//PrintHelper.printLaw(l);
-				String path = outputDir.getAbsolutePath() + "/" + l.getTitle() + ".txt";
+				String path = outputDir.getAbsolutePath() + "/" + l.getTitle().replace('/', ' ') + ".txt";
 				try {
 					FileWriter writer = new FileWriter(path);
 					writer.write(StringHelper.join(l.getTitle(), l.getText()));
@@ -81,29 +80,39 @@ public class LawExtractorTest {
 					e.printStackTrace();
 				}
 			}
-			/*Law law = lists.get(0);
-			for(Field field : law.getClass().getDeclaredFields()) {
-				Method method;
+		}
+	}
+	
+	@Test
+	public void TestNPCFileExtractor() {
+		String NPCFile = "/Users/Catherine/Documents/Test/laws-utf8";
+		File dir = new File(NPCFile);
+		
+		LawExtractor extractor = new LawExtractor();
+		for(File f : dir.listFiles()) {
+			if(!f.getName().endsWith(".TXT")) {
+				continue;
+			}
+			logger.info(f.getAbsolutePath());
+			List<Law> lists = extractor.parseFromNPCFile(f.getAbsolutePath());
+			logger.debug("Get "+ lists.size() +" Laws from "+f.getName());
+			String output = "/Users/Catherine/Documents/Test/Law-Data/" + f.getName().substring(0, f.getName().length()-4);
+			File outputDir = new File(output);
+			outputDir.delete();
+			outputDir.mkdirs();
+			for(Law l: lists) {
+				String path = outputDir.getAbsolutePath() + "/" + l.getTitle().replace('/', ' ') + ".txt";
 				try {
-					method = law.getClass().getMethod("get" + field.getName().substring(0,1).toUpperCase() + field.getName().substring(1));
-					logger.debug(field.getName()+" = "+method.invoke(law));
-				} catch (NoSuchMethodException e) {
+					FileWriter writer = new FileWriter(path);
+					writer.write(StringHelper.join(l.getTitle(), l.getText()));
+					writer.flush();
+					writer.close();
+				} catch (IOException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SecurityException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IllegalArgumentException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (InvocationTargetException e) {
-					// TODO Auto-generated catch block
+					PrintHelper.printLaw(l);
 					e.printStackTrace();
 				}
-			}*/
+			}
 		}
 	}
 

@@ -16,5 +16,4 @@ public class IndexInitializerTest {
 		init.init4Search();
 		IndexReaderPool.getInstance().listTerms();
 	}
-
 }

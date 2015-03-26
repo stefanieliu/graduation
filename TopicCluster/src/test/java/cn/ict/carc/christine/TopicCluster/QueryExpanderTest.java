@@ -13,7 +13,7 @@ public class QueryExpanderTest {
 		QueryExpander expander = new QueryExpander("output");
 		//expander.
 		//expander.EstimateTopicModel(new File("/Users/Catherine/Documents/Test/laws-utf8/Extract-New/1"));
-		System.out.println(expander.expanse("子女赡养"));
+		System.out.println(expander.expanseOffline("子女赡养"));
 	}
 
 }

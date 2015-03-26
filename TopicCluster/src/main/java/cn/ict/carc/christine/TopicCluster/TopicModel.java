@@ -7,7 +7,9 @@ import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TreeSet;
 
 import org.apache.commons.math3.linear.BlockRealMatrix;
@@ -34,7 +36,9 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.Labeling;
+import cn.ict.carc.christine.bean.Law;
 import cn.ict.carc.christine.bean.LinkedMatrix;
+import cn.ict.carc.christine.util.CollectionHelper;
 import cn.ict.carc.christine.util.PrintHelper;
 import cn.ict.carc.christine.util.TxtFilter;
 
@@ -56,12 +60,10 @@ public class TopicModel {
 	
 	//parameter for store the middle results
 	private File output_dir;
-	private double [][] document_topic;
-	private double [][] word_document;
 	private double [][] check;
 
 	public TopicModel() {
-		this.numTopics = 500;
+		this.numTopics = 100;
 		this.alphaSum = 1;
 		this.beta = 0.01;
 		initInstance();
@@ -115,6 +117,11 @@ public class TopicModel {
         instances.addThruPipe(iterator);
 	}
 	
+	public void importLaws(Collection<Law> law) {
+		LawIterator iterator = new LawIterator(law);
+		instances.addThruPipe(iterator);
+	}
+	
 	public void setOutputDir(String output) {
 		this.output_dir = new File(output);
 		if(!this.output_dir.exists()) {
@@ -136,7 +143,7 @@ public class TopicModel {
 	}
 	
 	public double[] predictTopic(String query) {
-		return predictTopic(query, 10);
+		return predictTopic(query, 100);
 	}
 	
 	public double[] predictTopic(String query, int numIterations) {
@@ -185,6 +192,88 @@ public class TopicModel {
 		return model.getAlphabet().lookupIndex(word);
 	}
 	
+	public int[] getTopWordForTopic(int topic, int TopK, double threshold) {
+		logger.debug("Begin calc Top "+ TopK +" words for Topic " + "topic");
+        long start = System.currentTimeMillis();
+        ArrayList<TreeSet<IDSorter>> topicSortedWords = model.getSortedWords();
+    	Iterator<IDSorter> iterator = topicSortedWords.get(topic).iterator();
+    	TreeSet<Integer> topWords = new TreeSet<Integer>();
+    	int count = 0;
+		while (iterator.hasNext()&&count++<TopK) {
+			IDSorter info = iterator.next();
+			if(info.getWeight()<threshold) {
+				break;
+			}
+			topWords.add(info.getID());
+		}
+        logger.debug("Finish calc Top "+ TopK +" words for Topic " + "topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+        return CollectionHelper.toIntArray(topWords);
+	}
+	
+	public int[] getTopWordForTopicWithoutSingleCharacter(int topic, int TopK, double threshold) {
+		//logger.debug("Begin calc Top "+ TopK +" words for Topic " + topic);
+        long start = System.currentTimeMillis();
+        ArrayList<TreeSet<IDSorter>> topicSortedWords = model.getSortedWords();
+    	Iterator<IDSorter> iterator = topicSortedWords.get(topic).iterator();
+    	TreeSet<Integer> topWords = new TreeSet<Integer>();
+    	int count = 0;
+		while (iterator.hasNext()&&count<TopK) {
+			IDSorter info = iterator.next();
+			if(info.getWeight()<threshold) {
+				break;
+			}
+			if(this.getWord(info.getID()).length()>=2) {
+				topWords.add(info.getID());
+				count++;
+			}
+		}
+		//logger.debug("Finish calc Top "+ TopK +" words for Topic " + "topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+        return CollectionHelper.toIntArray(topWords);
+	}
+	
+	public int[] getTopWords(int TopK, double threshold) {
+		logger.debug("Begin calc Top "+ TopK +" words for each Topic");
+        long start = System.currentTimeMillis();
+        ArrayList<TreeSet<IDSorter>> topicSortedWords = model.getSortedWords();
+        TreeSet<Integer> topWords = new TreeSet<Integer>();
+        for(int i=0; i<this.getNumTopics(); ++i) {
+	    	Iterator<IDSorter> iterator = topicSortedWords.get(i).iterator();
+	    	int count = 0;
+			while (iterator.hasNext()&&count++<TopK) {
+				IDSorter info = iterator.next();
+				if(info.getWeight()<threshold) {
+					break;
+				}
+				topWords.add(info.getID());
+			}
+        }
+        logger.debug("Finish calc Top "+ TopK +" words for each Topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+        return CollectionHelper.toIntArray(topWords);
+	}
+	
+	public int[] getTopWordsWithoutSingleCharacter(int TopK, double threshold) {
+		logger.debug("Begin calc Top "+ TopK +" words for each Topic");
+        long start = System.currentTimeMillis();
+        ArrayList<TreeSet<IDSorter>> topicSortedWords = model.getSortedWords();
+        TreeSet<Integer> topWords = new TreeSet<Integer>();
+        for(int i=0; i<this.getNumTopics(); ++i) {
+	    	Iterator<IDSorter> iterator = topicSortedWords.get(i).iterator();
+	    	int count = 0;
+			while (iterator.hasNext()&&count<TopK) {
+				IDSorter info = iterator.next();
+				if(info.getWeight()<threshold) {
+					break;
+				}
+				if(this.getWord(info.getID()).length()>=2) {
+					topWords.add(info.getID());
+					count++;
+				}
+			}
+        }
+        logger.debug("Finish calc Top "+ TopK +" words for each Topic, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+        return CollectionHelper.toIntArray(topWords);
+	}
+	
     public void saveResult() throws Exception {
     	//Save model information for review
         FileWriter w1 = new FileWriter(output_dir + "/topic.xml");
@@ -202,62 +291,19 @@ public class TopicModel {
         model.alphabet.dump(new PrintWriter(new FileWriter(output_dir+"/alphabet.txt")));
         
         //generate middle result of Query Expansion
-        document_topic = new double[this.getNumDocs()][this.getNumTopics()];
-        word_document = new double[this.getNumWords()][this.getNumDocs()];
+        //document_topic = new double[this.getNumDocs()][this.getNumTopics()];
+        //word_document = new double[this.getNumWords()][this.getNumDocs()];
         LinkedMatrix word_topic = new LinkedMatrix(this.getNumWords(), this.getNumTopics());
         
-        generateDocumentTopicMatrix(document_topic, 0);
-        generateWordDocumentMatrix(word_document);
-        generateWordTopicMatrix(word_topic, 0);
+        //generateDocumentTopicMatrix(document_topic, 0);
+        //generateWordDocumentMatrix(word_document);
+        //generateWordTopicMatrix(word_topic, 0);
         
-        PrintHelper.printMatrix(new PrintWriter(new FileWriter(output_dir+"/doc_topic.txt")), document_topic, this.getNumDocs(), this.getNumTopics());
+        //PrintHelper.printMatrix(new PrintWriter(new FileWriter(output_dir+"/doc_topic.txt")), document_topic, this.getNumDocs(), this.getNumTopics());
         
         PrintHelper.printLinkedMatrix(new PrintWriter(new FileWriter(output_dir+"/word_topic.txt")), word_topic, 6, 10e-6);
         
         word_topic.clear();
-        
-        check = generateCheck(word_document);
-        
-        Thread[] threads = new Thread[10];
-        int threadcount = 10;
-        for(int i=0; i<threadcount; ++i) {
-        	threads[i]=new CalcWordThread(i*this.getNumTopics()/threadcount, this.getNumTopics()/threadcount, this.getNumWords());
-        	threads[i].start();
-        }
-        boolean finish = true;
-        do {
-        	Thread.currentThread().sleep(6000);
-        	finish = true;
-        	for(int i=0; i<threadcount; ++i) {
-        		if(threads[i].isAlive()) {
-        			finish = false;
-        			break;
-        		}
-        	}
-        } while(!finish);
-    }
-    
-    private class CalcWordThread extends Thread {
-    	private int startTopic;
-    	private int num;
-    	private LinkedMatrix word_word = null;
-    	
-    	public CalcWordThread(int startTopic, int num, int numTopic) {
-    		this.startTopic = startTopic;
-    		this.num = num;
-    		this.word_word = new LinkedMatrix(numTopic, numTopic);
-    	}
-    	public void run() {
-            for(int i=startTopic; i<startTopic + num; ++i) { 
-            	word_word.clear();
-            	generateTopicCooccurrenceMatrix(i, word_word, word_document, document_topic, check, 10e-6);
-            	try {
-					PrintHelper.printLinkedMatrix(new PrintWriter(new FileWriter(output_dir+"/word_word("+i+").txt")), word_word, 6, 10e-2);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-            }
-    	}
     }
     
     private double[][] genCheck(double[][] word_document) {
@@ -285,7 +331,7 @@ public class TopicModel {
     	logger.debug("Finish calc Check Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     	return result;
     }
-	private void generateWordTopicMatrix(LinkedMatrix m, double threshold) {
+	public void generateWordTopicMatrix(LinkedMatrix m, double threshold) {
         logger.debug("Begin calc Word-Topic Matrix");
         long start = System.currentTimeMillis();
         for(int i=0; i<this.getNumTopics(); ++i) {
@@ -301,7 +347,7 @@ public class TopicModel {
         logger.debug("Finish calc Word-Topic Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     }
     
-    private void generateDocumentTopicMatrix(double[][] doc_topic, double threshold) {
+    public void generateDocumentTopicMatrix(double[][] doc_topic, double threshold) {
     	logger.debug("Begin calc Document-Topic Matrix");
     	long start = System.currentTimeMillis();
 
@@ -332,7 +378,7 @@ public class TopicModel {
 		logger.debug("Finish calc Document-Topic Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     }
 
-    private void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double[][] check, double threshold) {
+    public void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double[][] check, double threshold) {
     	logger.debug("Begin on calc Word_Word Matrix on Topic " + topic_id);
     	long start = System.currentTimeMillis();
     	
@@ -353,7 +399,7 @@ public class TopicModel {
     	logger.debug("Finish calc Word_Word Matrix on Topic " + topic_id + ", Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     }
     
-    private void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double threshold) {
+    public void generateTopicCooccurrenceMatrix(int topic_id, LinkedMatrix m , double[][] word_document, double[][] document_topic, double threshold) {
     	logger.debug("Begin on calc Word_Word Matrix on Topic " + topic_id);
     	long start = System.currentTimeMillis();
     	
@@ -372,7 +418,7 @@ public class TopicModel {
     	logger.debug("Finish calc Word_Word Matrix on Topic " + topic_id + ", Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     }
     
-	private void generateWordDocumentMatrix(double[][] word_document) {
+	public void generateWordDocumentMatrixWithLog(double[][] word_document) {
 		logger.debug("Begin on calc Word_Document Matrix");
 		long start = System.currentTimeMillis();
     	for(int i=0; i< this.getNumDocs(); ++i) {
@@ -385,6 +431,24 @@ public class TopicModel {
     	for(int i=0; i< this.getNumWords(); ++i) {
     		for(int j=0; j<this.getNumDocs(); ++j) {
     			word_document[i][j]=Math.log(1+word_document[i][j]);
+    		}
+    	}
+    	logger.debug("Finish calc Word_Document Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+	}
+	
+	public void generateWordDocumentMatrix(double[][] word_document) {
+		logger.debug("Begin on calc Word_Document Matrix");
+		long start = System.currentTimeMillis();
+    	for(int i=0; i< this.getNumDocs(); ++i) {
+    		Instance instance = model.getData().get(i).instance;
+    		FeatureSequence tokens = (FeatureSequence) instance.getData();
+    		for(int j=0; j<tokens.getLength(); ++j) {
+    			word_document[tokens.getIndexAtPosition(j)][i]++;
+    		}
+    	}
+    	for(int i=0; i< this.getNumWords(); ++i) {
+    		for(int j=0; j<this.getNumDocs(); ++j) {
+    			word_document[i][j]=1+word_document[i][j];
     		}
     	}
     	logger.debug("Finish calc Word_Document Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
@@ -425,5 +489,48 @@ public class TopicModel {
 	}
 	public int getNumDocs() {
 		return model.getData().size();
+	}
+
+	public void generateWordCoffMatrixWithDictionary(int topic_id, LinkedMatrix m, int dict_length, double[][] word_doc, double[][] doc_topic,
+			double threshold) {
+		logger.debug("Begin on calc Word_Word Matrix on Topic " + topic_id);
+    	long start = System.currentTimeMillis();
+    	int[] dicts = this.getTopWordForTopicWithoutSingleCharacter(topic_id, dict_length, threshold);
+    	for (int i=0; i< this.getNumWords(); ++i) {
+    		for(int j=0; j<dicts.length; ++j) {
+	     		double value = 0;
+	    		for(int k=0; k<this.getNumDocs(); ++k) {
+	    			double cooccurence = word_doc[i][k] * word_doc[dicts[j]][k];
+	    			value += cooccurence*doc_topic[k][topic_id];
+	  			}
+	   			if(value>=threshold) {
+	   				m.set(i, dicts[j], value);
+    			}
+    		}
+    	}
+    	logger.debug("Finish calc Word_Word Matrix on Topic " + topic_id + ", Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+	}
+
+	public void generateWordCoffMatrixWithQueryAndDictionary(int topic_id,
+			LinkedMatrix m, int[] queries, int dict_length, double[][] word_doc,
+			double[][] doc_topic, double threshold) {
+		logger.debug("Begin on calc Mini size("+queries.length+","+dict_length+") of Word_Word Matrix on Topic " + topic_id);
+    	long start = System.currentTimeMillis();
+    	int[] dicts = this.getTopWordForTopicWithoutSingleCharacter(topic_id, dict_length, threshold);
+    	for (int i=0; i< queries.length; ++i) {
+    		if(m.existRow(queries[i])) {
+	    		for(int j=0; j<dicts.length; ++j) {
+		     		double value = 0;
+		    		for(int k=0; k<this.getNumDocs(); ++k) {
+		    			double cooccurence = word_doc[queries[i]][k] * word_doc[dicts[j]][k];
+		    			value += cooccurence*doc_topic[k][topic_id];
+		  			}
+		   			if(value>=threshold) {
+		   				m.set(queries[i], dicts[j], value);
+	    			}
+	    		}
+    		}
+    	}
+    	logger.debug("Finish calc Mini size of Word_Word Matrix on Topic " + topic_id + ", Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
 	}
 }

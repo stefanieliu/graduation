@@ -254,8 +254,9 @@ public class LawExtractor {
 				if(!chapter.isEmpty()) {
 					Law ch = law.deepCopy();
 					ch.setText(chapter);
-					ch.setId(ch.getId()*1000+id++);
-					ch.setTitle(ch.getTitle().replace('/', ' ')+" "+chapterTitle);
+					ch.setId(ch.getId()*100+id);
+					ch.setTitle(ch.getTitle().replace('/', ' ')+" "+id);
+					++id;
 					chapter = "";
 					chapterTitle ="";
 					result.add(ch);
@@ -271,8 +272,12 @@ public class LawExtractor {
 					chapterTitle = line.substring(line.indexOf('>')+1,end);
 					chapter = line.substring(line.charAt(end)=='&'?end+1:end);
 				} else if(line.indexOf('第')!=-1){
-					chapterTitle = line.substring(line.indexOf('第'),end);
-					chapter = line.substring(line.charAt(end)=='&'?end+1:end);
+					if(line.indexOf('第')<end) {
+						chapterTitle = line.substring(line.indexOf('第'),end);
+						chapter = line.substring(line.charAt(end)=='&'?end+1:end);
+					} else {
+						System.out.println(line);
+					}
 				} else {
 					System.out.println(line);
 				}
@@ -286,8 +291,9 @@ public class LawExtractor {
 		} else if(!chapter.isEmpty()) {
 			Law ch = law.deepCopy();
 			ch.setText(chapter);
-			ch.setId(ch.getId()*1000+id++);
-			ch.setTitle(ch.getTitle().replace('/', ' ')+" "+chapterTitle);
+			ch.setId(ch.getId()*100+id);
+			ch.setTitle(ch.getTitle().replace('/', ' ')+" "+id);
+			++id;
 			chapter = "";
 			chapterTitle ="";
 			result.add(ch);
