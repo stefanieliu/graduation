@@ -258,6 +258,82 @@ public class LawExtractor {
 		return list;
 	}
 	
+	public List<Law> parseChapterFromNPCFileWithFilter(String filePath, LawFilter filter) {
+		ArrayList<Law> list = new ArrayList<Law>();
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(filePath));
+			String line = null;
+			Law law = null;
+			String field = null;
+			line = reader.readLine();
+			boolean skip = false;
+			while( line!= null) {
+				if(!skip) {
+					if(line.startsWith("#")) {
+						if(line.matches("#[\\d*>|\\d+][\\S\\s]+$")) {
+							field += ("\n" + line);
+						} else if(line.startsWith("#唯一标识")) {
+							if(law != null) {
+								addField2Law(law, field);
+								if(law.getText()!=null) {
+									optimize(law);
+									if(filter.accept(law)) {
+										List<Law> chapters = spiltToChapter(law);
+										list.addAll(chapters);
+									}
+								}
+							}
+							law = new Law();
+							field = line;
+						} else if(line.startsWith("#正文")||line.startsWith("#目录")) {
+							addField2Law(law, field);
+							field = line.substring(0,5);
+							line = line.substring(5);
+							continue;
+						} else {
+							addField2Law(law, field);
+							field = line;
+						}
+					} else if(line.startsWith("@")) {
+						if(line.matches("@\\d+>[\\S\\s]+$")) {
+							if(line.indexOf('>')!=-1) {
+								field += ("\n" + line.substring(line.indexOf('>')+1));
+							} else{
+								field += ("\n" + line.substring(line.indexOf('第')));
+							}
+						}
+					} else if(line.equals("<pre>")) {
+						skip = true;
+					} else if(!line.isEmpty()) {
+						field += line;
+					}
+				} else {
+					if(line.equals("</pre>")) {
+						skip=false;
+					}
+				}
+				line = reader.readLine();
+			}
+			reader.close();
+			if(law != null) {
+				addField2Law(law, field);
+				if(law.getText()!=null) {
+					optimize(law);
+					if(filter.accept(law)) {
+						List<Law> chapters = spiltToChapter(law);
+						list.addAll(chapters);
+					}
+				}
+			}
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+	
+	
 	private List<Law> spiltToChapter(Law law) {
 		String text = law.getText();
 		List<Law> result = new ArrayList<Law>();

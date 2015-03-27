@@ -74,29 +74,21 @@ public class IndexAdminTest {
 	public void testChapter() throws Exception {
 		IndexInitializer initializer = new IndexInitializer();
 		initializer.init();
+		initializer.init4CreateIndex();
+		IndexAdmin admin = new IndexAdmin();
 		
 		String NPCDIR = "/Users/Catherine/Documents/Test/Topic-Related/Origin/";
 		LawFilter filter = new LawFilter("婚姻农业经济环境");
-		List<Law> ls = new ArrayList<Law>();
+		List<Law> its = new ArrayList<Law>();
+		List<Law> chs = new ArrayList<Law>();
 		LawExtractor extractor = new LawExtractor();
 		File dir = new File(NPCDIR);
 		for(File f : dir.listFiles()) {
 			if(f.getName().endsWith(".TXT")) {
-				List<Law> laws = extractor.parseItemFromNPCFileWithFilter(f.getAbsolutePath(),filter);
-				ls.addAll(laws);
+				its.addAll(extractor.parseItemFromNPCFileWithFilter(f.getAbsolutePath(),filter));
+				chs.addAll(extractor.parseChapterFromNPCFileWithFilter(f.getAbsolutePath(),filter));
 			}
 		}
-
-		
-		//Config.IndexDirectory="indexChapterlog";
-		//Config.TopicClusterDirectory="topicChapterlog";
-		/*initializer.init4CreateIndex();
-		String NPCFile = "/Users/Catherine/Documents/Test/laws-utf8/1.TXT";
-		LawExtractor extractor = new LawExtractor();
-		List<Law> laws = extractor.parseItemFromNPCFile(NPCFile);
-		IndexAdmin admin = new IndexAdmin();
-		admin.delAllIndex();
-		admin.writeAllLaws(laws);*/
 		
 		String output = "/Users/Catherine/Documents/Test/Topic-Related/Law/";
 		File outputDir = new File(output);
@@ -107,9 +99,10 @@ public class IndexAdminTest {
 		} else {
 			outputDir.mkdirs();
 		}
-		System.out.println("Got " + ls.size() +" Law Item in total");
+		System.out.println("Got " + its.size() +" Law Item in total");
+		System.out.println("Got " + chs.size()+ " Law Chapter in total");
 		
-		for(Law l: ls) {
+		for(Law l: its) {
 			String path = outputDir.getAbsolutePath() + "/" + l.getId() + ".txt";
 			try {
 				FileWriter writer = new FileWriter(path);
@@ -122,13 +115,11 @@ public class IndexAdminTest {
 			}
 		}
 		
-		initializer.init4CreateIndex();
-		IndexAdmin admin = new IndexAdmin();
 		admin.delAllIndex();
-		admin.writeAllLaws(ls);
+		admin.writeAllLaws(its);
 		
 		QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
-		expander.estimateTopicModelWithSaving(ls, 100, 1000);
+		expander.estimateTopicModelWithSaving(chs, 100, 1000); 
 		//expander.estimateTopicModelWithSaving(outputDir, 1000);
 		
 		initializer.init4Search();

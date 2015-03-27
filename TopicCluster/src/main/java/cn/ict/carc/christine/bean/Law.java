@@ -195,7 +195,7 @@ public class Law {
 	}
 	public static Law fromLuceneDocument(Document doc) {
 		Law law = new Law();
-		law.id = Integer.parseInt(doc.get("ID"));
+		law.id = Long.parseLong(doc.get("ID"));
 		law.title = doc.get("Title");
 		law.caption = doc.get("Caption");
 		law.text = doc.get("Text");
