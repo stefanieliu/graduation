@@ -16,7 +16,7 @@ import cn.ict.carc.christine.util.DateHelper;
 
 public class Law {
 
-	private int id=0; // #唯一标识
+	private long id=0; // #唯一标识
 
 	private String title=null; //  #标题
 	private String caption=null; // #题注
@@ -40,10 +40,10 @@ public class Law {
 	private Date includeDate=null; // #入库时间
 	private double relScore = 0;
 	
-	public int getId() {
+	public long getId() {
 		return id;
 	}
-	public void setId(int id) {
+	public void setId(long id) {
 		this.id = id;
 	}
 	public String getTitle() {

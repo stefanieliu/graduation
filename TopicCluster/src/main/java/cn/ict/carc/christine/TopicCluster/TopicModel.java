@@ -60,7 +60,7 @@ public class TopicModel {
 	
 	//parameter for store the middle results
 	private File output_dir;
-	private double [][] check;
+	//private double [][] check;
 
 	public TopicModel() {
 		this.numTopics = 100;
@@ -155,11 +155,12 @@ public class TopicModel {
 		return probs;
 	}
 	
-	public double[][] getDocumentTopicDistribution(double threshold, int topK) {
+/*	public double[][] getDocumentTopicDistribution(double threshold, int topK) {
 		double[][] doc_topic = new double[this.getNumDocs()][this.getNumTopics()];
 		this.generateDocumentTopicMatrix(doc_topic, threshold);
 		return doc_topic;
 	}
+	*/
 	
 	public int[] getQueryWordIndexes(String query) {
 		InstanceList testing = new InstanceList(instances.getPipe());
@@ -293,7 +294,7 @@ public class TopicModel {
         //generate middle result of Query Expansion
         //document_topic = new double[this.getNumDocs()][this.getNumTopics()];
         //word_document = new double[this.getNumWords()][this.getNumDocs()];
-        LinkedMatrix word_topic = new LinkedMatrix(this.getNumWords(), this.getNumTopics());
+        //LinkedMatrix word_topic = new LinkedMatrix(this.getNumWords(), this.getNumTopics());
         
         //generateDocumentTopicMatrix(document_topic, 0);
         //generateWordDocumentMatrix(word_document);
@@ -301,9 +302,9 @@ public class TopicModel {
         
         //PrintHelper.printMatrix(new PrintWriter(new FileWriter(output_dir+"/doc_topic.txt")), document_topic, this.getNumDocs(), this.getNumTopics());
         
-        PrintHelper.printLinkedMatrix(new PrintWriter(new FileWriter(output_dir+"/word_topic.txt")), word_topic, 6, 10e-6);
+        //PrintHelper.printLinkedMatrix(new PrintWriter(new FileWriter(output_dir+"/word_topic.txt")), word_topic, 6, 10e-6);
         
-        word_topic.clear();
+        //word_topic.clear();
     }
     
     private double[][] genCheck(double[][] word_document) {
@@ -316,7 +317,7 @@ public class TopicModel {
     	return ret;
 	}
     
-    private double[][] generateCheck(double[][] word_document) {
+    public double[][] generateCheck(double[][] word_document) {
     	logger.debug("Begin calc Check Matrix(Custom)"); 
     	long start = System.currentTimeMillis();
     	double [][] result = new double[this.getNumWords()][this.getNumWords()];
@@ -331,6 +332,8 @@ public class TopicModel {
     	logger.debug("Finish calc Check Matrix, Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
     	return result;
     }
+    
+    
 	public void generateWordTopicMatrix(LinkedMatrix m, double threshold) {
         logger.debug("Begin calc Word-Topic Matrix");
         long start = System.currentTimeMillis();
@@ -532,5 +535,27 @@ public class TopicModel {
     		}
     	}
     	logger.debug("Finish calc Mini size of Word_Word Matrix on Topic " + topic_id + ", Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+	}
+
+	public void generateWordCoffMatrixWithDictionary(int topic_id, LinkedMatrix m, int dict_length, double[][] word_doc, double[][] doc_topic, double[][] check,  double threshold) {
+		logger.debug("Begin on calc Word_Word Matrix on Topic " + topic_id);
+    	long start = System.currentTimeMillis();
+    	int[] dicts = this.getTopWordForTopicWithoutSingleCharacter(topic_id, dict_length, threshold);
+    	for (int i=0; i< this.getNumWords(); ++i) {
+    		for(int j=0; j<dicts.length; ++j) {
+    			if(check[i][dicts[j]]>threshold) {
+		     		double value = 0;
+		    		for(int k=0; k<this.getNumDocs(); ++k) {
+		    			double cooccurence = word_doc[i][k] * word_doc[dicts[j]][k];
+		    			value += cooccurence*doc_topic[k][topic_id];
+		  			}
+		   			if(value>=threshold) {
+		   				m.set(i, dicts[j], value);
+	    			}
+    			}
+    		}
+    	}
+    	logger.debug("Finish calc Word_Word Matrix on Topic " + topic_id + ", Calc Time:"+(System.currentTimeMillis() - start) + "Millis");
+	
 	}
 }

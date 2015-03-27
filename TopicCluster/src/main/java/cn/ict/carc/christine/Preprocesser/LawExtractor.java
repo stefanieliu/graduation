@@ -22,6 +22,7 @@ import org.dom4j.io.SAXReader;
 
 import cn.ict.carc.christine.bean.Law;
 import cn.ict.carc.christine.util.DateHelper;
+import cn.ict.carc.christine.util.LawFilter;
 import cn.ict.carc.christine.util.StringHelper;
 
 public class LawExtractor {
@@ -116,6 +117,13 @@ public class LawExtractor {
 				line = reader.readLine();
 			}
 			reader.close();
+			if(law != null) {
+				addField2Law(law, field);
+				if(law.getText()!=null) {
+					optimize(law);
+					list.add(law);
+				}
+			}
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -234,6 +242,14 @@ public class LawExtractor {
 				line = reader.readLine();
 			}
 			reader.close();
+			if(law != null) {
+				addField2Law(law, field);
+				if(law.getText()!=null) {
+					optimize(law);
+					List<Law> chapters = spiltToChapter(law);
+					list.addAll(chapters);
+				}
+			}
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -352,11 +368,94 @@ public class LawExtractor {
 				line = reader.readLine();
 			}
 			reader.close();
+			if(law != null) {
+				addField2Law(law, field);
+				if(law.getText()!=null) {
+					optimize(law);
+					List<Law> items = spiltToItem(spiltToChapter(law));
+					list.addAll(items);
+				}
+			}
 		} catch(FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return list;
+	}
+	
+	public List<Law> parseItemFromNPCFileWithFilter(String filePath, LawFilter filter) {
+		int lawcount = 0;
+		ArrayList<Law> list = new ArrayList<Law>();
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(filePath));
+			String line = null;
+			Law law = null;
+			String field = null;
+			line = reader.readLine();
+			boolean skip = false;
+			while( line!= null) {
+				if(!skip) {
+					if(line.startsWith("#")) {
+						if(line.matches("#[\\d*>|\\d+][\\S\\s]+$")) {
+							field += ("\n" + line);
+						} else if(line.startsWith("#唯一标识")) {
+							if(law != null) {
+								addField2Law(law, field);
+								if(law.getText()!=null) {
+									optimize(law);
+									if(filter.accept(law)) {
+										++lawcount;
+										List<Law> items = spiltToItem(spiltToChapter(law));
+										list.addAll(items);
+									}
+								}
+							}
+							law = new Law();
+							field = line;
+						} else if(line.startsWith("#正文")||line.startsWith("#目录")) {
+							addField2Law(law, field);
+							field = line.substring(0,5);
+							line = line.substring(5);
+							continue;
+						} else {
+							addField2Law(law, field);
+							field = line;
+						}
+					} else if(line.startsWith("@")) {
+						if(line.matches("@\\d+>[\\S\\s]+$")) {
+							field += ("\n" + line);
+						}
+					} else if(line.equals("<pre>")) {
+						skip = true;
+					} else if(!line.isEmpty()) {
+						field += line;
+					}
+				} else {
+					if(line.equals("</pre>")) {
+						skip=false;
+					}
+				}
+				line = reader.readLine();
+			}
+			reader.close();
+			if(law != null) {
+				addField2Law(law, field);
+				if(law.getText()!=null) {
+					optimize(law);
+					if(filter.accept(law)) {
+						++lawcount;
+						List<Law> items = spiltToItem(spiltToChapter(law));
+						list.addAll(items);
+					}
+				}
+			}
+		} catch(FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		logger.info("Got "+lawcount+" laws in total");
 		return list;
 	}
 

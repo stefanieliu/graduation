@@ -18,6 +18,7 @@ import cn.ict.carc.christine.Preprocesser.LawExtractor;
 import cn.ict.carc.christine.TopicCluster.QueryExpander;
 import cn.ict.carc.christine.bean.Law;
 import cn.ict.carc.christine.util.Config;
+import cn.ict.carc.christine.util.LawFilter;
 import cn.ict.carc.christine.util.StringHelper;
 
 public class IndexAdminTest {
@@ -73,6 +74,20 @@ public class IndexAdminTest {
 	public void testChapter() throws Exception {
 		IndexInitializer initializer = new IndexInitializer();
 		initializer.init();
+		
+		String NPCDIR = "/Users/Catherine/Documents/Test/Topic-Related/Origin/";
+		LawFilter filter = new LawFilter("婚姻农业经济环境");
+		List<Law> ls = new ArrayList<Law>();
+		LawExtractor extractor = new LawExtractor();
+		File dir = new File(NPCDIR);
+		for(File f : dir.listFiles()) {
+			if(f.getName().endsWith(".TXT")) {
+				List<Law> laws = extractor.parseItemFromNPCFileWithFilter(f.getAbsolutePath(),filter);
+				ls.addAll(laws);
+			}
+		}
+
+		
 		//Config.IndexDirectory="indexChapterlog";
 		//Config.TopicClusterDirectory="topicChapterlog";
 		/*initializer.init4CreateIndex();
@@ -83,11 +98,18 @@ public class IndexAdminTest {
 		admin.delAllIndex();
 		admin.writeAllLaws(laws);*/
 		
-		/*String output = "/home/Test/Extract-Chapter/1/";
+		String output = "/Users/Catherine/Documents/Test/Topic-Related/Law/";
 		File outputDir = new File(output);
-		outputDir.delete();
-		outputDir.mkdirs();
-		for(Law l: laws) {
+		if(outputDir.exists()) {
+			for(File f : outputDir.listFiles()) {
+				f.delete();
+			}
+		} else {
+			outputDir.mkdirs();
+		}
+		System.out.println("Got " + ls.size() +" Law Item in total");
+		
+		for(Law l: ls) {
 			String path = outputDir.getAbsolutePath() + "/" + l.getId() + ".txt";
 			try {
 				FileWriter writer = new FileWriter(path);
@@ -98,14 +120,19 @@ public class IndexAdminTest {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}*/
+		}
 		
-		//QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
-		//expander.estimateTopicModelWithSaving(laws, 1000);
+		initializer.init4CreateIndex();
+		IndexAdmin admin = new IndexAdmin();
+		admin.delAllIndex();
+		admin.writeAllLaws(ls);
+		
+		QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
+		expander.estimateTopicModelWithSaving(ls, 100, 1000);
 		//expander.estimateTopicModelWithSaving(outputDir, 1000);
 		
 		initializer.init4Search();
-		IndexAdmin admin = new IndexAdmin();
+		//IndexAdmin admin = new IndexAdmin();
 		ArrayList<Law> result = new ArrayList<Law>();
 		System.out.println("TotalHits = " + admin.query("离婚后的子女抚养问题", 0, 10, result));
 		for(int i=0; i<result.size(); ++i) {

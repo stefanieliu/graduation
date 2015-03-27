@@ -77,11 +77,12 @@ public class QueryExpander {
         double[][] word_document = new double[model.getNumWords()][model.getNumDocs()];
         model.generateDocumentTopicMatrix(document_topic, THRESHOLD);
         model.generateWordDocumentMatrixWithLog(word_document);
+        double[][] check = model.generateCheck(word_document);
         int threadCount = 10;
         int num = model.getNumTopics() / threadCount;
         WordCoffThread[] threads = new WordCoffThread[threadCount];
         for(int i=0; i<threadCount; ++i) {
-        	threads[i] = new WordCoffThread(i*num, num, model.getNumWords(), DICTIONARY_ITEM_LENGTH, document_topic, word_document);
+        	threads[i] = new WordCoffThread(i*num, num, model.getNumWords(), DICTIONARY_ITEM_LENGTH, document_topic, word_document, check);
         	threads[i].start();
         }
         boolean finish = true;
@@ -104,20 +105,22 @@ public class QueryExpander {
     	private LinkedMatrix word_dictword = null;
     	private double[][] doc_topic = null;
     	private double[][] word_doc = null;
-		public WordCoffThread(int startTopic, int num, int numWords, int numDictWords, double[][] doc_topic, double[][] word_doc) {
+    	private double[][] check = null;
+		public WordCoffThread(int startTopic, int num, int numWords, int numDictWords, double[][] doc_topic, double[][] word_doc, double[][] check) {
 			this.startTopic = startTopic;
 			this.num = num;
 			this.word_dictword = new LinkedMatrix(numWords, numWords);
 			this.numDictWords = numDictWords;
 			this.doc_topic = doc_topic;
 			this.word_doc = word_doc;
+			this.check = check;
 		}
 		
 		@Override
 		public void run() {
 			for(int i=startTopic; i<startTopic + num; ++i) {
 				this.word_dictword.clear();
-				model.generateWordCoffMatrixWithDictionary(i, word_dictword, numDictWords ,word_doc, doc_topic, 10e-6);
+				model.generateWordCoffMatrixWithDictionary(i, word_dictword, numDictWords ,word_doc, doc_topic, check ,10e-6);
             	try {
 					PrintHelper.printLinkedMatrix(new PrintWriter(new FileWriter(output_dir+"/word_word("+i+").txt")), word_dictword, 6, 10e-6);
 				} catch (IOException e) {
