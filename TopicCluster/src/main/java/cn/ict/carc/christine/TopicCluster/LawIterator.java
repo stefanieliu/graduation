@@ -29,4 +29,9 @@ public class LawIterator implements Iterator<Instance> {
 		return new Instance (nextlaw.getText(), nextlaw.getId(), nextlaw.getTitle(), null);
 	}
 
+	@Override
+	public void remove() {
+		iter.remove();
+	}
+
 }

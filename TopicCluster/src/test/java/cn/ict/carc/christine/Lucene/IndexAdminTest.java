@@ -77,7 +77,7 @@ public class IndexAdminTest {
 		initializer.init4CreateIndex();
 		IndexAdmin admin = new IndexAdmin();
 		
-		String NPCDIR = "/Users/Catherine/Documents/Test/Topic-Related/Origin/";
+		String NPCDIR = "/home/Test/Topic-Related/Origin/";
 		LawFilter filter = new LawFilter("婚姻农业经济环境");
 		List<Law> its = new ArrayList<Law>();
 		List<Law> chs = new ArrayList<Law>();
@@ -90,7 +90,7 @@ public class IndexAdminTest {
 			}
 		}
 		
-		String output = "/Users/Catherine/Documents/Test/Topic-Related/Law/";
+		String output = "/home/Test/Topic-Related/Law/";
 		File outputDir = new File(output);
 		if(outputDir.exists()) {
 			for(File f : outputDir.listFiles()) {

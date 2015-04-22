@@ -78,7 +78,7 @@ public class QueryExpander {
         model.generateDocumentTopicMatrix(document_topic, THRESHOLD);
         model.generateWordDocumentMatrixWithLog(word_document);
         double[][] check = model.generateCheck(word_document);
-        int threadCount = 10;
+        int threadCount = 20;
         int num = model.getNumTopics() / threadCount;
         WordCoffThread[] threads = new WordCoffThread[threadCount];
         for(int i=0; i<threadCount; ++i) {
