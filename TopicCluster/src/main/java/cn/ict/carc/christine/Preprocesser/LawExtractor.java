@@ -481,9 +481,11 @@ public class LawExtractor {
 								if(law.getText()!=null) {
 									optimize(law);
 									if(filter.accept(law)) {
-										++lawcount;
 										List<Law> items = spiltToItem(spiltToChapter(law));
-										list.addAll(items);
+										if(items.size()>1) {
+											++lawcount;
+											list.addAll(items);
+										}
 									}
 								}
 							}

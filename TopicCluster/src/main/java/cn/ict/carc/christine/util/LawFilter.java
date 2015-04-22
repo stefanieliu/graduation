@@ -36,7 +36,7 @@ public class LawFilter {
 	
 	public boolean accept(Law law) {
 		for(String key : keywords) {
-			if(law.getText().contains(key)) {
+			if(law.getTitle().contains(key)) {
 				return true;
 			}
 		}

@@ -79,8 +79,8 @@ public class IndexAdminTest {
 		initializer.init4CreateIndex();
 		IndexAdmin admin = new IndexAdmin();
 		
-		/*String NPCDIR = "/home/Test/Topic-Related/Origin/";
-		LawFilter filter = new LawFilter("婚姻农业经济环境");
+		String NPCDIR = "/home/Test/Topic-Related/Origin/";
+		LawFilter filter = new LawFilter("婚姻");
 		List<Law> its = new ArrayList<Law>();
 		//List<Law> chs = new ArrayList<Law>();
 		LawExtractor extractor = new LawExtractor();
@@ -123,7 +123,7 @@ public class IndexAdminTest {
 		QueryExpander expander = new QueryExpander(Config.TopicClusterDirectory);
 		expander.estimateTopicModelWithSaving(its, 1000, 1000); 
 		expander.estimateTopicModelWithSaving(outputDir, 1000);
-		*/
+		
 		initializer.init4Search();
 		//IndexAdmin admin = new IndexAdmin();
 		ArrayList<Law> result = new ArrayList<Law>();

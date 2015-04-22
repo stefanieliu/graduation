@@ -151,18 +151,18 @@ private int defaultTopK = 10;
 			}
 			endoffset = docs.totalHits>endoffset?endoffset:docs.totalHits;
   
-			Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
-			highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
+			//Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
+			//highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
 			
 			for(int i = startoffset; i < endoffset ; i++){ 
 			
 				Document d = searcher.doc(docs.scoreDocs[i].doc);
 				Law law = Law.fromLuceneDocument(d);
 				law.setRelScore(docs.scoreDocs[i].score);
-				String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
-				if(content!=null) {
-					law.setText(content);
-				}
+				//String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
+				//if(content!=null) {
+				//	law.setText(content);
+				//}
 				result.add(law);
 			}
 			return docs.totalHits;
@@ -214,18 +214,18 @@ private int defaultTopK = 10;
 			}
 			endoffset = docs.totalHits>endoffset?endoffset:docs.totalHits;
   
-			Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
-			highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
+			//Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
+			//highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
 			
 			for(int i = startoffset; i < endoffset ; i++){ 
 			
 				Document d = searcher.doc(docs.scoreDocs[i].doc);
 				Law law = Law.fromLuceneDocument(d);
 				law.setRelScore(docs.scoreDocs[i].score);
-				String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
-				if(content!=null) {
-					law.setText(content);
-				}
+				//String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
+				//if(content!=null) {
+				//	law.setText(content);
+				//}
 				result.add(law);
 			}
 			return docs.totalHits;
@@ -304,18 +304,18 @@ private int defaultTopK = 10;
 			}
 			endoffset = docs.totalHits>endoffset?endoffset:docs.totalHits;
   
-			Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
-			highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
+			//Highlighter highlighter = new Highlighter(formatter,new QueryScorer(lucenequery));
+			//highlighter.setTextFragmenter(new SimpleFragmenter(Integer.MAX_VALUE));
 			
 			for(int i = startoffset; i < endoffset ; i++){ 
 			
 				Document d = searcher.doc(docs.scoreDocs[i].doc);
 				Law law = Law.fromLuceneDocument(d);
 				law.setRelScore(docs.scoreDocs[i].score);
-				String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
-				if(content!=null) {
-					law.setText(content);
-				}
+				//String content = highlighter.getBestFragment(new SmartChineseAnalyzer(), "content", law.getText());
+				//if(content!=null) {
+				//	law.setText(content);
+				//}
 				result.add(law);
 			}
 			return docs.totalHits;

@@ -155,7 +155,7 @@ public class QueryExpander {
 		Arrays.fill(wordProbs, 0);
 		while(iter.hasNext()&&k<TOP_K) {
 			MaxHeapElement e = iter.next();
-			if(e.value >= THRESHOLD) {
+			if(e.value >= 0.1 ){//THRESHOLD) {
 				logger.debug("Calc with Topic " + e.index + " for expanse("+e.value+")");
 				ArrayHelper.addInPlace(wordProbs, this.addExpansionOfTopic(e.index, topicProbs[e.index], queryword, numwords));
 			}
